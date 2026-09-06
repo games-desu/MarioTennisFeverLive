@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { createServiceClient } from "@/lib/supabase";
 import {
-  YT_SCHEDULE,
-  YT_DAILY_CAPTURES,
+  type ScheduleBand,
+  ytSchedule,
+  ytDailyCaptures,
   YT_UNITS_PER_CAPTURE,
   YT_DAILY_QUOTA,
+  YT_MAX_CAPTURES_PER_QUOTA_DAY,
   TW_EXPECTED_MIN,
   currentJstHour,
+  currentJstDayType,
   ytExpectedMin,
   jstTodayStartUtc,
 } from "@/lib/schedule";
@@ -334,9 +337,11 @@ export default async function AdminPage({
   }[];
   const recentSnaps = (recentSnapsRes.data ?? []) as SnapshotRow[];
 
-  // 現在のJST時刻（時）。YouTube の想定間隔は時間帯別（lib/schedule.ts が唯一の定義）。
+  // 現在のJST時刻（時）と平日/土日。YouTube の想定間隔は「曜日×時間帯」別
+  // （lib/schedule.ts が唯一の定義）。
   const jstHour = currentJstHour();
-  const ytExpected = ytExpectedMin(jstHour);
+  const jstDayType = currentJstDayType();
+  const ytExpected = ytExpectedMin(jstHour, jstDayType);
   const twExpected = TW_EXPECTED_MIN;
 
   // PF別に「最新収集時刻・直近間隔・欠測判定」を計算する。
@@ -766,12 +771,17 @@ export default async function AdminPage({
         </div>
       </section>
 
-      {/* 収集スケジュール（時間帯別の取得間隔） */}
+      {/* 収集スケジュール（曜日×時間帯の取得間隔） */}
       <section className="mb-10">
-        <h2 className="mb-1 text-sm font-black text-slate-700">収集スケジュール（時間帯別の取得間隔）</h2>
+        <h2 className="mb-1 text-sm font-black text-slate-700">
+          収集スケジュール（曜日×時間帯の取得間隔）
+        </h2>
         <p className="mb-2 text-[11px] text-slate-400">
-          下表は <span className="font-bold">YouTube</span> の間隔です。
-          <span className="font-bold">Twitch</span> は日次上限が無いため、時間帯によらず
+          下表は <span className="font-bold">YouTube</span> の
+          <span className="font-bold">{jstDayType === "weekend" ? "土日" : "平日"}</span>
+          （＝いまの曜日）の間隔です。土日は日中の配信が平日の約5倍あるため 12〜18時を厚くし、
+          その原資を深夜0〜4時と23時から回しています。
+          <span className="font-bold">Twitch</span> は日次上限が無いため、曜日・時間帯によらず
           <span className="font-bold">終日2分ごと</span>（別ジョブ）で収集しています。
         </p>
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -784,7 +794,7 @@ export default async function AdminPage({
               </tr>
             </thead>
             <tbody>
-              {YT_SCHEDULE.map((b) => {
+              {ytSchedule(jstDayType).map((b: ScheduleBand) => {
                 // 「いまここ」は間隔ではなく現在の時間帯（JST時）で判定する。
                 const active = b.hours.includes(jstHour);
                 return (
@@ -810,15 +820,18 @@ export default async function AdminPage({
               <tr className="border-t border-slate-100 text-xs text-slate-500">
                 <td className="px-4 py-2 font-bold">合計</td>
                 <td className="px-4 py-2"></td>
-                <td className="px-4 py-2 font-bold tabular-nums">{YT_DAILY_CAPTURES}回/日</td>
+                <td className="px-4 py-2 font-bold tabular-nums">{ytDailyCaptures(jstDayType)}回/日</td>
               </tr>
             </tfoot>
           </table>
         </div>
         <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
-          間隔は YouTube Data API の1日あたりの上限（10,000ユニット。1回の収集は search 1ページのみで約100ユニット消費）に収まるよう、
-          直近の実測（時間帯別の平均配信数）に基づき配信が多い時間帯ほど短く配分しています（合計 約9,100ユニット/日）。実体は Supabase の
-          pg_cron（収集ジョブ YouTube 6本＋Twitch 1本 ＋ 掃除 ＋ チャンネルエンリッチ）で、サーバー時刻(UTC)で登録・日本時間で運用しています。
+          間隔は YouTube Data API の1日あたりの上限（{YT_DAILY_QUOTA.toLocaleString()}ユニット。1回の収集は search 1ページのみで約
+          {YT_UNITS_PER_CAPTURE}ユニット消費）に収まるよう、直近の実測（曜日×時間帯の配信開始数）に基づき配分しています。
+          クォータのリセットは太平洋時間の深夜0時＝JST16:00なので、上限は「JST16:00〜翌16:00」の窓で見ており、最大は
+          {YT_MAX_CAPTURES_PER_QUOTA_DAY}回（約{(YT_MAX_CAPTURES_PER_QUOTA_DAY * YT_UNITS_PER_CAPTURE).toLocaleString()}ユニット）です。
+          実体は Supabase の pg_cron（収集ジョブ YouTube 平日9本＋土日8本 ＋ Twitch 1本 ＋ 掃除 ＋ チャンネルエンリッチ）で、
+          サーバー時刻(UTC)で登録・日本時間で運用しています。祝日は cron で表現できないため平日と同じ間隔です。
           エンリッチは登録者数・開設日を1日1回だけ取得（クォータリセット直後・50chで1ユニット）します。
         </p>
       </section>

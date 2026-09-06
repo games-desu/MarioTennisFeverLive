@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createPublicClient } from "@/lib/supabase";
-import { currentJstHour, ytExpectedMin, TW_EXPECTED_MIN } from "@/lib/schedule";
+import {
+  currentJstHour,
+  currentJstDayType,
+  ytExpectedMin,
+  TW_EXPECTED_MIN,
+} from "@/lib/schedule";
 
 // 外形監視（UptimeRobot等）用のヘルスチェック。認証不要・匿名キーの読み取りのみ。
 // 収集(YouTube/Twitch)とエンリッチが止まっていたら 503 を返す。
@@ -51,7 +56,11 @@ export async function GET() {
       detail: `最終収集 ${ageMin}分前（想定間隔 ${expectedMin}分）`,
     });
   }
-  captureCheck("collect-youtube", ytRes.data?.[0]?.captured_at, ytExpectedMin(currentJstHour()));
+  captureCheck(
+    "collect-youtube",
+    ytRes.data?.[0]?.captured_at,
+    ytExpectedMin(currentJstHour(), currentJstDayType()),
+  );
   captureCheck("collect-twitch", twRes.data?.[0]?.captured_at, TW_EXPECTED_MIN);
 
   // エンリッチ: 1日1回（JST17:30）。最新日がJSTの前日より古ければ1回以上飛んでいる。
