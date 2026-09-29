@@ -17,6 +17,7 @@ import { Toolbar, DeleteSnapshotButton } from "./Actions";
 import AnalyticsChart, { type PointRow } from "./AnalyticsChart";
 import { countryJa } from "@/lib/countries";
 import FlIcon from "../components/FlIcon";
+import { describeCronJst, jobPurpose, lastScheduledRun, nextScheduledRun } from "@/lib/cronLabel";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,17 @@ function relative(iso: string | null): string {
   if (min < 60) return `${min}分前`;
   const h = Math.floor(min / 60);
   return `${h}時間${min % 60}分前`;
+}
+
+// 次回実行予定の表示（JST・曜日つき）。例: 「土 0:00」
+function nextRunLabel(ms: number | null): string {
+  if (ms == null) return "—";
+  return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(ms));
 }
 
 // サーバー(Vercel)はUTCで動くため、日本時間(JST)へ明示的に変換して表示する。
@@ -436,7 +448,7 @@ export default async function AdminPage({
       <section className="mb-8">
         <h2 className="mb-1 text-sm font-black text-slate-700">ジョブ稼働状況（pg_cron）</h2>
         <p className="mb-2 text-[11px] text-slate-400">
-          収集・エンリッチ（登録者数など・毎日17:30）・掃除（毎日2:00）の全ジョブの実行結果です。
+          収集・エンリッチ・掃除の全ジョブの実行結果です。時刻はすべて日本時間。土日だけ動くジョブは平日は止まっていて正常です（直近の予定どおりに成功していなければ黄色）。
         </p>
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
@@ -444,6 +456,7 @@ export default async function AdminPage({
               <tr className="border-b border-slate-100 text-left text-xs text-slate-400">
                 <th className="px-4 py-2 font-medium">ジョブ</th>
                 <th className="px-4 py-2 font-medium">最終成功</th>
+                <th className="px-4 py-2 font-medium">次回</th>
                 <th className="px-4 py-2 font-medium">直近の結果</th>
                 <th className="px-4 py-2 font-medium tabular-nums">24h失敗</th>
               </tr>
@@ -453,13 +466,25 @@ export default async function AdminPage({
                 const sinceSuccessH = j.last_success
                   ? (Date.now() - new Date(j.last_success).getTime()) / 3600000
                   : Infinity;
-                // 最長間隔のジョブでも1日1回。26時間成功が無ければ停止扱い。
-                const stale = sinceSuccessH > 26 || !j.active;
+                // 直近の実行予定（10分の猶予つき）より後に成功が無ければ停止扱い。
+                // 土日専用ジョブが平日に止まっているのは正常なので、経過時間では判定しない。
+                const lastDue = lastScheduledRun(j.schedule);
+                const stale =
+                  !j.active ||
+                  (lastDue != null
+                    ? !j.last_success || new Date(j.last_success).getTime() < lastDue - 60000
+                    : sinceSuccessH > 26);
+                const nextRun = j.active ? nextScheduledRun(j.schedule) : null;
+                const purpose = jobPurpose(j.jobname);
                 const failed = j.last_status != null && j.last_status !== "succeeded";
                 return (
                   <tr key={j.jobname} className="border-b border-slate-50 last:border-0">
-                    <td className="px-4 py-2 font-mono text-xs text-slate-700">
-                      {j.jobname}
+                    <td className="px-4 py-2 text-xs text-slate-700">
+                      <div className="font-bold">
+                        {purpose && <span className="mr-1.5">{purpose}</span>}
+                        <span className="font-normal text-slate-600">{describeCronJst(j.schedule)}</span>
+                      </div>
+                      <div className="font-mono text-[10px] text-slate-400">{j.jobname}</div>
                       {!j.active && (
                         <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
                           無効
@@ -469,6 +494,7 @@ export default async function AdminPage({
                     <td className={`px-4 py-2 text-xs ${stale ? "font-bold text-amber-600" : "text-slate-600"}`}>
                       {relative(j.last_success)}
                     </td>
+                    <td className="px-4 py-2 text-xs text-slate-500">{nextRunLabel(nextRun)}</td>
                     <td className={`px-4 py-2 text-xs ${failed ? "font-bold text-red-600" : "text-slate-500"}`}>
                       {j.last_status === "succeeded" ? "成功" : (j.last_status ?? "—")}
                     </td>
@@ -480,7 +506,7 @@ export default async function AdminPage({
               })}
               {jobs.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-4 text-center text-xs text-slate-400">
+                  <td colSpan={5} className="px-4 py-4 text-center text-xs text-slate-400">
                     ジョブ情報を取得できませんでした（admin_job_health RPC 未適用の可能性）。
                   </td>
                 </tr>
