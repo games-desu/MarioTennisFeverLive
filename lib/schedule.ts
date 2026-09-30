@@ -58,7 +58,7 @@ export const YT_DAILY_QUOTA = 10000; // YouTube Data API の1日上限
 // クォータのリセットはPT深夜0時＝JST16:00。曜日で配分を変えると「JST16:00→翌16:00」の
 // 窓ごとに回数が変わるため、上限判定はこの最大値（平日→平日の90回＝9,180u）で見る。
 export const YT_MAX_CAPTURES_PER_QUOTA_DAY = 90;
-export const TW_EXPECTED_MIN = 2; // Twitch は終日2分間隔（mtf-collect-twitch）
+export const TW_EXPECTED_MIN = 4; // Twitch は終日4分間隔（mtf-collect-twitch・2026-09-30に2分→4分）
 
 export function currentJstHour(): number {
   return (

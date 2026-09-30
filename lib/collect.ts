@@ -19,6 +19,8 @@ export interface CollectResult {
 //   - captures に「そのPFで収集した事実」を1行記録（0件でも必ず入れる）。これが
 //     current_streams（PF別の最新収集時点）の基準になる。
 //   - 配信が1件以上あるときだけ stream_snapshots に明細を保存する。
+// 両方を RPC save_capture 1本で書く（API本数＝Supabase の Log Ingestion を減らすため。
+// 20260930_log_ingestion_tuning.sql）。
 async function saveCapture(
   platform: "youtube" | "twitch",
   streams: LiveStream[],
@@ -26,33 +28,27 @@ async function saveCapture(
   const capturedAt = new Date().toISOString();
   const supabase = createServiceClient();
 
-  const { error: capErr } = await supabase
-    .from("captures")
-    .insert({ captured_at: capturedAt, platform, count: streams.length });
-  if (capErr) {
-    console.error(`[collect] captures insert失敗(${platform}):`, capErr);
-    throw new Error(capErr.message);
-  }
-
-  if (streams.length > 0) {
-    const rows: StreamSnapshot[] = streams.map((s) => ({
-      captured_at: capturedAt,
-      platform: s.platform,
-      game: s.game,
-      channel_id: s.channelId,
-      channel_name: s.channelName,
-      stream_id: s.streamId,
-      stream_started_at: s.startedAt ?? null,
-      title: s.title,
-      viewers: s.viewers,
-      language: s.language,
-      url: s.url,
-    }));
-    const { error } = await supabase.from("stream_snapshots").insert(rows);
-    if (error) {
-      console.error(`[collect] snapshot insert失敗(${platform}):`, error);
-      throw new Error(error.message);
-    }
+  const rows: StreamSnapshot[] = streams.map((s) => ({
+    captured_at: capturedAt,
+    platform: s.platform,
+    game: s.game,
+    channel_id: s.channelId,
+    channel_name: s.channelName,
+    stream_id: s.streamId,
+    stream_started_at: s.startedAt ?? null,
+    title: s.title,
+    viewers: s.viewers,
+    language: s.language,
+    url: s.url,
+  }));
+  const { error } = await supabase.rpc("save_capture", {
+    p_captured_at: capturedAt,
+    p_platform: platform,
+    p_rows: rows,
+  });
+  if (error) {
+    console.error(`[collect] save_capture失敗(${platform}):`, error);
+    throw new Error(error.message);
   }
 
   return capturedAt;

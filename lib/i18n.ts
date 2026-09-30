@@ -75,8 +75,8 @@ const DICT = {
   "home.liveNow": { ja: "いま配信中", en: "Live now" },
   "home.vsLast": { ja: "前回比", en: "vs last" },
   "home.vsLastTitle": {
-    ja: "本日1つ前の収集時点（Twitchは約2分前・YouTubeは時間帯により5〜60分前）の総視聴者数との差",
-    en: "Change from the previous collection today (Twitch: ~2 min ago; YouTube: 5–60 min ago depending on time of day)",
+    ja: "本日1つ前の収集時点（Twitchは約4分前・YouTubeは時間帯により5〜60分前）の総視聴者数との差",
+    en: "Change from the previous collection today (Twitch: ~4 min ago; YouTube: 5–60 min ago depending on time of day)",
   },
   "home.watching": { ja: "人が視聴中", en: "watching now" },
   "home.streams": { ja: "配信数", en: "Live streams" },
@@ -97,8 +97,8 @@ const DICT = {
     en: "Fetched more often at night when streams peak (~5 min around 21:00–1:00 JST, ~10–15 min in the evening, ~20 min late at night, ~60 min in the daytime)",
   },
   "home.twFetchDesc": {
-    ja: "終日ほぼ一定で約2分ごと",
-    en: "Roughly every 2 minutes, all day",
+    ja: "終日ほぼ一定で約4分ごと",
+    en: "Roughly every 4 minutes, all day",
   },
   "home.refreshDesc": {
     ja: "取得済みデータを自動で再読込（閲覧時に外部APIは呼び出しません）",
@@ -261,8 +261,8 @@ const DICT = {
   },
   "about.dataH": { ja: "データについて", en: "About the data" },
   "about.data": {
-    ja: "配信情報は本サイトが定期的に収集したスナップショットに基づいています（Twitch は約2分ごと、YouTube は時間帯により約5〜60分ごと）。視聴者数などの数値は収集時点の値をもとにした推定を含みます。ページの閲覧中に外部APIを呼び出すことはありません。",
-    en: "Stream data is based on snapshots this site collects periodically (Twitch about every 2 minutes; YouTube every 5–60 minutes depending on the time of day). Figures such as viewer counts include estimates based on those snapshots. No external APIs are called while you browse.",
+    ja: "配信情報は本サイトが定期的に収集したスナップショットに基づいています（Twitch は約4分ごと、YouTube は時間帯により約5〜60分ごと）。視聴者数などの数値は収集時点の値をもとにした推定を含みます。ページの閲覧中に外部APIを呼び出すことはありません。",
+    en: "Stream data is based on snapshots this site collects periodically (Twitch about every 4 minutes; YouTube every 5–60 minutes depending on the time of day). Figures such as viewer counts include estimates based on those snapshots. No external APIs are called while you browse.",
   },
   "about.creatorH": { ja: "作成者", en: "Creator" },
   "about.creator": {
