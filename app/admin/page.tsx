@@ -718,7 +718,7 @@ export default async function AdminPage({
         </div>
       </section>
 
-      {/* 直近captures（PF別。Twitchは2分間隔で流れが速いため混ぜると YouTube が埋もれる） */}
+      {/* 直近captures（PF別。Twitchは4分間隔で流れが速いため混ぜると YouTube が埋もれる） */}
       <section className="mb-8">
         <h2 className="mb-2 text-sm font-black text-slate-700">直近の取得履歴</h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -808,7 +808,7 @@ export default async function AdminPage({
           （＝いまの曜日）の間隔です。土日は日中の配信が平日の約5倍あるため 12〜18時を厚くし、
           その原資を深夜0〜4時と23時から回しています。
           <span className="font-bold">Twitch</span> は日次上限が無いため、曜日・時間帯によらず
-          <span className="font-bold">終日2分ごと</span>（別ジョブ）で収集しています。
+          <span className="font-bold">終日4分ごと</span>（別ジョブ）で収集しています。
         </p>
         <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full text-sm">
