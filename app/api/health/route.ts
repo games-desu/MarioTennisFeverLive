@@ -9,6 +9,7 @@ import {
 
 // 外形監視（UptimeRobot等）用のヘルスチェック。認証不要・匿名キーの読み取りのみ。
 // 収集(YouTube/Twitch)とエンリッチが止まっていたら 503 を返す。
+// Supabase のログ量を抑えるため、最新時刻は health_snapshot RPC 1本でまとめて取る。
 export const dynamic = "force-dynamic";
 
 interface Check {
@@ -17,28 +18,23 @@ interface Check {
   detail: string;
 }
 
+interface Snapshot {
+  youtube: string | null;
+  twitch: string | null;
+  enrich_day: string | null;
+}
+
 export async function GET() {
   const supabase = createPublicClient();
 
-  const [ytRes, twRes, enrichRes] = await Promise.all([
-    supabase
-      .from("captures")
-      .select("captured_at")
-      .eq("platform", "youtube")
-      .order("captured_at", { ascending: false })
-      .limit(1),
-    supabase
-      .from("captures")
-      .select("captured_at")
-      .eq("platform", "twitch")
-      .order("captured_at", { ascending: false })
-      .limit(1),
-    supabase
-      .from("channel_stats_daily")
-      .select("day")
-      .order("day", { ascending: false })
-      .limit(1),
-  ]);
+  const { data, error } = await supabase.rpc("health_snapshot");
+  if (error || !data) {
+    return NextResponse.json(
+      { ok: false, checks: [{ name: "db", ok: false, detail: error?.message ?? "応答なし" }] },
+      { status: 503 },
+    );
+  }
+  const snap = data as Snapshot;
 
   const checks: Check[] = [];
 
@@ -58,13 +54,13 @@ export async function GET() {
   }
   captureCheck(
     "collect-youtube",
-    ytRes.data?.[0]?.captured_at,
+    snap.youtube ?? undefined,
     ytExpectedMin(currentJstHour(), currentJstDayType()),
   );
-  captureCheck("collect-twitch", twRes.data?.[0]?.captured_at, TW_EXPECTED_MIN);
+  captureCheck("collect-twitch", snap.twitch ?? undefined, TW_EXPECTED_MIN);
 
   // エンリッチ: 1日1回（JST17:30）。最新日がJSTの前日より古ければ1回以上飛んでいる。
-  const latestDay = enrichRes.data?.[0]?.day as string | undefined;
+  const latestDay = snap.enrich_day ?? undefined;
   if (!latestDay) {
     checks.push({ name: "enrich", ok: false, detail: "エンリッチデータがありません" });
   } else {
