@@ -26,7 +26,8 @@ export const GAMES: GameDef[] = [
     fullName: "マリオテニスフィーバー",
     fullNameEn: "Mario Tennis Fever",
     twitchCategory: "Mario Tennis Fever",
-    ytKeywords: ["マリオテニスフィーバー", "mario tennis fever"],
+    // 「マリテニフィーバー」は略称。「マリオテニス7 フィーバー」は実際の配信タイトルにあった表記
+    ytKeywords: ["マリオテニスフィーバー", "マリテニフィーバー", "マリオテニス7フィーバー", "mario tennis fever"],
     badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
     dotClass: "bg-emerald-500",
     chartColor: "#1f9d4d",
@@ -74,9 +75,14 @@ export function gameFullName(g: GameDef, lang: "ja" | "en"): string {
   return lang === "en" ? g.fullNameEn : g.fullName;
 }
 
-// タイトルの空白（半角/全角）を無視して小文字で突き合わせる。
-// 「マリオテニス エース」のように語間に空白を挟むタイトルを取りこぼさないため。
-const normalize = (s: string): string => s.toLowerCase().replace(/[\s　]+/g, "");
+// タイトルの表記ゆれを吸収してから小文字で突き合わせる。
+// - NFKC で全角英数を半角に（「マリオテニス６４」「ＦＥＶＥＲ」）、半角カナを全角に
+// - 空白（半角/全角）と中黒・ハイフン類を除去（「マリオテニス エース」「マリオテニス・フィーバー」）
+const normalize = (s: string): string =>
+  s
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s　・･\-‐－]+/g, "");
 
 const NORMALIZED: Array<{ id: GameId; keys: string[] }> = GAMES.map((g) => ({
   id: g.id,
