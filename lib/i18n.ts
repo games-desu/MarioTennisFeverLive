@@ -63,6 +63,25 @@ const DICT = {
     ja: "数値は本サイトが収集したスナップショットに基づく推定値です（収集間隔の粒度）。✓付きの配信時間はアーカイブから取得した実測値です（1日1回更新）。",
     en: "Figures are estimates based on snapshots collected by this site. Durations marked ✓ are actual times from the archive (updated once a day).",
   },
+  "st.cardTitle": { ja: "記録カード", en: "Record card" },
+  "st.cardLead": {
+    ja: "選んでいる期間の記録を1枚の画像にします。Xへの投稿や保存に使えます。",
+    en: "Turns the record for the selected period into a single image you can post or save.",
+  },
+  "st.cardMake": { ja: "カードを作る", en: "Make a card" },
+  "st.cardMaking": { ja: "カードを作っています…", en: "Making the card…" },
+  "st.cardFailed": {
+    ja: "カードを作れませんでした。時間をおいてもう一度お試しください。",
+    en: "The card could not be made. Please try again later.",
+  },
+  "st.cardPostX": { ja: "Xに投稿", en: "Post on X" },
+  "st.cardSave": { ja: "画像を保存", en: "Save image" },
+  "st.cardCopy": { ja: "リンクをコピー", en: "Copy link" },
+  "st.cardCopied": { ja: "コピーしました", en: "Copied" },
+  "st.cardNote": {
+    ja: "「Xに投稿」では、このページのリンクに直近30日のカードが付いて表示されます。7日・90日のカードを載せたいときは、画像を保存して投稿に添付してください。",
+    en: "“Post on X” shares the link to this page, which shows the last-30-day card. To post the 7- or 90-day card, save the image and attach it.",
+  },
   "st.actualTitle": {
     ja: "アーカイブから取得した実測の配信時間",
     en: "Actual duration from the archive",

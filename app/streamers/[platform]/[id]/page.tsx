@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import LangToggle from "../../../components/LangToggle";
 import { useLang } from "../../../components/LocaleProvider";
 import FlIcon from "../../../components/FlIcon";
+import RecordCard from "../../../components/RecordCard";
 import { GAME_BY_ID, gameLabel, type GameId, isGameId } from "@/lib/games";
 import { intlLocale, type Lang } from "@/lib/i18n";
 import { trackOutbound } from "@/lib/track";
@@ -443,6 +444,11 @@ export default function StreamerDetailPage() {
               </>
             );
           })()}
+
+          {/* 記録カード（共有用の画像） */}
+          {d?.stats?.first_seen_all && (
+            <RecordCard platform={platform} channelId={channelId} name={name} days={days} />
+          )}
 
           {/* 時間帯・曜日の傾向 */}
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
