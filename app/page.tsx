@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import StreamList from "./components/StreamList";
 import YesterdayHighlights from "./components/YesterdayHighlights";
+import TournamentSpotlight from "./components/TournamentSpotlight";
 import ThemeToggle from "./components/ThemeToggle";
 import LangToggle from "./components/LangToggle";
 import { useLang } from "./components/LocaleProvider";
@@ -356,6 +357,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* 大会看板（SENSEKI FEVER）に登録された大会の時間帯だけ出る特設枠 */}
+      <TournamentSpotlight streams={[...youtube, ...twitch]} game={game} />
 
       {/* コントロール */}
       <div className="mb-4 flex flex-wrap items-center gap-y-2 px-1">

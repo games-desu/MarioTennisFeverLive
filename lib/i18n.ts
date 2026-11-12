@@ -103,6 +103,18 @@ const DICT = {
   "home.counting": { ja: "集計中", en: "Counting…" },
   "home.sort": { ja: "並び替え", en: "Sort" },
   "home.filter": { ja: "絞り込み", en: "Filter" },
+  "home.evLive": { ja: "大会 開催中", en: "Tournament live" },
+  "home.evSoon": { ja: "このあと大会", en: "Tournament soon" },
+  "home.evHost": { ja: "主催", en: "Host:" },
+  "home.evPage": { ja: "大会ページ", en: "Event page" },
+  "home.evNone": {
+    ja: "この大会の配信は、まだ見つかっていません。",
+    en: "No streams for this tournament found yet.",
+  },
+  "home.evNote": {
+    ja: "配信はタイトル（「大会」など）と主催者名から自動で選んでいます。",
+    en: "Streams are picked automatically from titles and the host name.",
+  },
   "sort.viewers": { ja: "視聴者数", en: "Viewers" },
   "sort.name": { ja: "名前順", en: "Name" },
   "sort.elapsed": { ja: "経過時間", en: "Uptime" },
