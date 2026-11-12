@@ -10,6 +10,7 @@ import { useLang } from "./components/LocaleProvider";
 import type { StreamSnapshot } from "@/lib/types";
 import { GAMES, gameLabel, gameFullName, type GameId } from "@/lib/games";
 import type { Lang } from "@/lib/i18n";
+import { TAGS, streamTags, tagLabel, type TagId } from "@/lib/tags";
 
 type SortKey = "viewers" | "name" | "elapsed";
 const SORT_KEYS = {
@@ -58,6 +59,7 @@ export default function Home() {
   const [peakAt, setPeakAt] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("viewers");
   const [game, setGame] = useState<"all" | GameId>("all"); // タイトル切り替え（既定=全タイトル）
+  const [tag, setTag] = useState<TagId | null>(null); // タグでの絞り込み（null=絞り込まない）
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -134,6 +136,15 @@ export default function Home() {
   const twPct = grandTotal > 0 ? (twViewers / grandTotal) * 100 : 0;
   // 前回取得からの増減（前回値が取れているときだけ表示）
   const delta = previousTotal != null ? grandTotal - previousTotal : null;
+
+  // タグごとの配信数。いま1本も無いタグのボタンは出さない。
+  const tagCounts = new Map<TagId, number>();
+  for (const s of [...youtube, ...twitch]) {
+    for (const id of streamTags(s.title)) tagCounts.set(id, (tagCounts.get(id) ?? 0) + 1);
+  }
+  const liveTags = TAGS.filter((x) => tagCounts.has(x.id));
+  // 選んでいたタグの配信が全部終わったら、空の一覧を見せずに絞り込みを外す
+  const activeTag = tag && tagCounts.has(tag) ? tag : null;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
@@ -364,6 +375,36 @@ export default function Home() {
             </button>
           ))}
         </div>
+        {/* タグで絞り込み（上の人数・配信数は絞り込まず全体のまま） */}
+        {liveTags.length > 0 && (
+          <div className="flex w-full flex-wrap items-center gap-1">
+            <span className="mr-1 text-xs text-slate-400">{t("home.filter")}</span>
+            <button
+              onClick={() => setTag(null)}
+              className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
+                activeTag === null
+                  ? "border-brand bg-brand/10 text-brand"
+                  : "border-slate-200 bg-white text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {t("common.all")}
+            </button>
+            {liveTags.map((x) => (
+              <button
+                key={x.id}
+                onClick={() => setTag(activeTag === x.id ? null : x.id)}
+                className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
+                  activeTag === x.id
+                    ? "border-brand bg-brand/10 text-brand"
+                    : "border-slate-200 bg-white text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {tagLabel(x, lang)}
+                <span className="ml-1 font-normal tabular-nums opacity-70">{tagCounts.get(x.id)}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {error && (
@@ -380,6 +421,7 @@ export default function Home() {
           sortKey={sortKey}
           capturedAt={capturedAt}
           showGameBadge={game === "all"}
+          tag={activeTag}
         />
       )}
 

@@ -102,6 +102,7 @@ const DICT = {
   "home.todayPeak": { ja: "本日ピーク", en: "Today's peak" },
   "home.counting": { ja: "集計中", en: "Counting…" },
   "home.sort": { ja: "並び替え", en: "Sort" },
+  "home.filter": { ja: "絞り込み", en: "Filter" },
   "sort.viewers": { ja: "視聴者数", en: "Viewers" },
   "sort.name": { ja: "名前順", en: "Name" },
   "sort.elapsed": { ja: "経過時間", en: "Uptime" },

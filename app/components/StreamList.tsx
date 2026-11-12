@@ -5,6 +5,7 @@ import { GAME_BY_ID, gameLabel } from "@/lib/games";
 import { trackClick } from "@/lib/track";
 import { useLang } from "./LocaleProvider";
 import type { Lang } from "@/lib/i18n";
+import { TAG_BY_ID, streamTags, tagLabel, type TagId } from "@/lib/tags";
 
 type SortKey = "viewers" | "name" | "elapsed";
 
@@ -80,10 +81,23 @@ function Badges({ s, capturedAt }: { s: StreamSnapshot; capturedAt: string | nul
   const elapsed = elapsedLabel(s.started_at, capturedAt, lang);
   const streak = s.streak_days ?? 0;
   const trend = s.trend ? TREND[s.trend] : null;
-  if (!elapsed && streak < 2 && !trend) return null;
+  const tags = streamTags(s.title);
+  if (!elapsed && streak < 2 && !trend && tags.length === 0) return null;
 
   return (
     <div className="mt-1 flex flex-wrap items-center gap-1">
+      {/* タイトルから読み取ったタグ（参加型・ランクマなど） */}
+      {tags.map((id) => {
+        const tag = TAG_BY_ID.get(id);
+        return tag ? (
+          <span
+            key={id}
+            className="inline-flex items-center rounded-full border border-brand/30 bg-brand/5 px-1.5 py-0.5 text-[10px] font-bold text-brand"
+          >
+            {tagLabel(tag, lang)}
+          </span>
+        ) : null;
+      })}
       {streak >= 2 && (
         <span className="inline-flex items-center gap-0.5 rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[10px] font-bold text-orange-600">
           {lang === "en" ? `${streak}-day streak` : `${streak}日連続`}
@@ -111,15 +125,19 @@ export default function StreamList({
   sortKey,
   capturedAt,
   showGameBadge = false,
+  tag = null,
 }: {
   streams: StreamSnapshot[];
   sortKey: SortKey;
   capturedAt: string | null;
   // 「すべて」表示のとき、どのタイトルの配信か一目で分かるようゲームバッジを出す
   showGameBadge?: boolean;
+  // タグで絞り込むとき（null = 絞り込まない）
+  tag?: TagId | null;
 }) {
   const { lang, t } = useLang();
-  const sorted = [...streams].sort((a, b) => {
+  const shown = tag ? streams.filter((s) => streamTags(s.title).includes(tag)) : streams;
+  const sorted = [...shown].sort((a, b) => {
     if (sortKey === "name") {
       return (a.channel_name ?? "").localeCompare(b.channel_name ?? "", "ja");
     }
