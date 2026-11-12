@@ -104,6 +104,13 @@ const DICT = {
     ja: "取得済みデータを自動で再読込（閲覧時に外部APIは呼び出しません）",
     en: "Auto-reloads stored data (no external API calls while viewing)",
   },
+  // 昨日の見どころ（日付や人数を埋め込む文は YesterdayHighlights 側で lang 分岐）
+  "home.hlTitle": { ja: "昨日の見どころ", en: "Yesterday's highlights" },
+  "home.hlTop": { ja: "視聴者数トップ3", en: "Most watched" },
+  "home.hlPeak": { ja: "最大同時視聴", en: "peak viewers" },
+  "home.hlBest": { ja: "自己最高を更新", en: "New personal best" },
+  "home.hlNew": { ja: "初登場", en: "First time here" },
+  "home.hlLongest": { ja: "最長配信", en: "Longest stream" },
   "home.viewersNote": {
     ja: "視聴者数は取得時点の同時視聴者数です。",
     en: "Viewer counts are concurrent viewers at collection time.",

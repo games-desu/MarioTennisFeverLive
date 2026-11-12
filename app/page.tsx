@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import StreamList from "./components/StreamList";
+import YesterdayHighlights from "./components/YesterdayHighlights";
 import ThemeToggle from "./components/ThemeToggle";
 import LangToggle from "./components/LangToggle";
 import { useLang } from "./components/LocaleProvider";
@@ -381,6 +382,8 @@ export default function Home() {
           showGameBadge={game === "all"}
         />
       )}
+
+      <YesterdayHighlights game={game} />
 
       <footer className="mt-8 space-y-3 border-t border-slate-200 pt-4">
         {/* 取得・更新タイミング（サーバーの収集と、この画面の再読込は別物） */}
