@@ -15,6 +15,7 @@ import {
   eventPhase,
   eventStreams,
   fetchBoardEvents,
+  isLongEvent,
   type BoardEvent,
 } from "@/lib/events";
 import { trackClick } from "@/lib/track";
@@ -28,6 +29,15 @@ function jstHm(ms: number): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+  });
+}
+
+// 期間開催の大会は時刻ではなく開始日を出す（終了日は仮のことがあるので出さない）
+function jstMd(ms: number): string {
+  return new Date(ms).toLocaleDateString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
   });
 }
 
@@ -61,16 +71,26 @@ export default function TournamentSpotlight({
     };
   }, []);
 
+  // 期間開催の大会は何週間も続くので、開催中はその大会の配信があるときだけ出す
   const shown = events
-    .map((e) => ({ e, phase: eventPhase(e, now), g: eventGame(e) }))
-    .filter((x) => x.phase && (game === "all" || game === x.g));
+    .map((e) => {
+      const phase = eventPhase(e, now);
+      const long = isLongEvent(e);
+      const list = phase === "live" ? eventStreams(e, streams) : [];
+      return { e, phase, long, list, g: eventGame(e) };
+    })
+    .filter(
+      (x) =>
+        x.phase &&
+        (game === "all" || game === x.g) &&
+        !(x.long && x.phase === "live" && x.list.length === 0),
+    );
   if (shown.length === 0) return null;
 
   return (
     <div className="mb-5 space-y-2.5">
-      {shown.map(({ e, phase, g }) => {
+      {shown.map(({ e, phase, long, list, g }) => {
         const live = phase === "live";
-        const list = live ? eventStreams(e, streams) : [];
         const start = new Date(e.starts_at).getTime();
         const gdef = GAME_BY_ID.get(g);
         return (
@@ -90,9 +110,13 @@ export default function TournamentSpotlight({
                 </span>
               )}
               <span className="text-[11px] tabular-nums text-slate-500">
-                {lang === "en"
-                  ? `${jstHm(start)}${e.ends_at ? `–${jstHm(eventEnd(e))}` : ""} JST`
-                  : `${jstHm(start)}〜${e.ends_at ? jstHm(eventEnd(e)) : ""}`}
+                {long
+                  ? lang === "en"
+                    ? `From ${jstMd(start)} · runs over several weeks`
+                    : `${jstMd(start)}〜 期間開催`
+                  : lang === "en"
+                    ? `${jstHm(start)}${e.ends_at ? `–${jstHm(eventEnd(e))}` : ""} JST`
+                    : `${jstHm(start)}〜${e.ends_at ? jstHm(eventEnd(e)) : ""}`}
               </span>
               {g !== "fever" && gdef && (
                 <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${gdef.badgeClass}`}>
